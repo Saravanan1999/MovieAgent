@@ -1,79 +1,110 @@
 import os
-from openai import OpenAI
 import requests
-from arklex.env.workers.worker import BaseWorker
-from arklex.utils.graph_state import StatusEnum  # ✅ Added
+from langgraph.graph import StateGraph, START
+from langchain_openai import ChatOpenAI
 
-client = OpenAI()
+from arklex.env.workers.worker import BaseWorker, register_worker
+from arklex.utils.graph_state import MessageState
+from arklex.env.tools.utils import ToolGenerator
+from arklex.utils.model_config import MODEL
+from arklex.utils.model_provider_config import PROVIDER_MAP
+from arklex.utils.graph_state import StatusEnum
 
-class MoodToGenreWorker(BaseWorker):
-    description = "Maps user mood to TMDB genre names, even with typos."
 
-    def _execute(self, msg_state):
-        user_input = msg_state.message_queue[-1]
+@register_worker
+class MovieGraphWorker(BaseWorker):
+    description = "Recommends movies using mood, genre, and exclusions. Robust to typos and incomplete input."
 
-        prompt = f"""
-        The user said: "{user_input}". It may contain spelling mistakes or casual phrasing.
-        Based on this, what is the most likely mood they're expressing?
-
-        Respond with only the mood (like 'happy', 'sad', 'relaxed', 'tired', 'romantic', 'excited', etc.).
-        Then suggest a single movie genre that best matches the mood from this list:
-        ['Comedy', 'Drama', 'Action', 'Romance', 'Horror', 'Thriller', 'Adventure', 'Animation', 'Sci-Fi'].
-
-        Respond in this format (no explanation):
-        Mood: [mood]
-        Genre: [genre]
-        """
-
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
+    def __init__(self):
+        super().__init__()
+        self.llm = PROVIDER_MAP.get(MODEL["llm_provider"], ChatOpenAI)(
+            model=MODEL["model_type_or_path"], timeout=30000
         )
+        self.graph = self._create_action_graph()
 
-        content = completion.choices[0].message.content.strip()
+    def _create_action_graph(self):
+        workflow = StateGraph(MessageState)
 
+        workflow.add_node("parse_mood_genre", self.parse_mood_genre)
+        workflow.add_node("fetch_movies", self.fetch_movies)
+        workflow.add_node("fallback", self.fallback_handler)
+        workflow.add_node("final_response", self.final_response)
+
+        workflow.add_edge(START, "parse_mood_genre")
+        workflow.add_conditional_edges(
+            "parse_mood_genre", self.check_parse_success,
+            {"success": "fetch_movies", "fail": "fallback"}
+        )
+        workflow.add_conditional_edges(
+            "fetch_movies", self.check_fetch_success,
+            {"success": "final_response", "fail": "fallback"}
+        )
+        workflow.add_edge("fallback", "final_response")
+
+        return workflow
+
+    def _execute(self, msg_state: MessageState):
+        return self.graph.compile().invoke(msg_state)
+
+    def final_response(self, state: MessageState):
+        # Use the response from fetch_movies or fallback
+        response = getattr(state, "response", None) or state.response
+        state.response = response
+        return state
+
+    
+    def parse_mood_genre(self, state: MessageState):
         try:
-            mood_line = next(line for line in content.split("\n") if line.lower().startswith("mood"))
-            genre_line = next(line for line in content.split("\n") if line.lower().startswith("genre"))
-            mood = mood_line.split(":", 1)[-1].strip()
-            genre = genre_line.split(":", 1)[-1].strip()
-        except Exception:
-            return self.create_response(message="Sorry, I couldn't interpret your mood clearly. Could you rephrase?", data={})
+            history = list(state.message_queue.queue) if hasattr(state.message_queue, "queue") else []
+            recent_context = " ".join(history[-5:] if history else [state.user_message.message])
 
-        msg_state.metadata.taskgraph.node_status[msg_state.metadata.taskgraph.curr_node] = StatusEnum.COMPLETE.value
+            prompt = f"""
+            The user is describing the type of movie they want. This could include mood, genre, or exclusions.
 
-        return {
-            "message_queue": msg_state.message_queue,
-            "genre": genre,
-            "mood": mood
-        }
+            Example input:
+            "I want something romantic but not a musical."
 
+            Conversation:
+            "{recent_context}"
 
+            Respond in this strict format:
+            Mood: [e.g., happy, sad, romantic]
+            Genre: [e.g., Comedy, Drama, Romance]
+            Exclude: [list of exclusions or None]
+            """
 
-class MovieFetchWorker(BaseWorker):
-    description = "Fetches popular movies by genre using TMDB API."
+            result = self.llm.invoke(prompt).content.strip()
+            mood = next(line for line in result.splitlines() if line.lower().startswith("mood:")).split(":", 1)[1].strip()
+            genre = next(line for line in result.splitlines() if line.lower().startswith("genre:")).split(":", 1)[1].strip()
+            exclude = next(line for line in result.splitlines() if line.lower().startswith("exclude:")).split(":", 1)[1].strip()
 
-    def _execute(self, msg_state):
-        api_key = os.getenv("TMDB_API_KEY")
+            # Store in metadata (only writable allowed place for dynamic info)
+            state.metadata.__dict__["mood"] = mood
+            state.metadata.__dict__["genres"] = [genre]
+            state.metadata.__dict__["exclude"] = exclude
+            state.status = StatusEnum.COMPLETE
+            return state
 
+        except Exception as e:
+            state.status = StatusEnum.INCOMPLETE
+            return state
+
+    def fetch_movies(self, state: MessageState):
         try:
-            genres = msg_state.data.get("genres", ["Drama"])
-        except AttributeError:
-            # fallback for compatibility
-            genres = getattr(msg_state, "genre", ["Drama"])
+            api_key = os.getenv("TMDB_API_KEY")
+            genres = state.metadata.__dict__.get("genres", ["Drama"])
             if isinstance(genres, str):
                 genres = [genres]
 
-        try:
             genre_url = f"https://api.themoviedb.org/3/genre/movie/list?api_key={api_key}&language=en-US"
             response = requests.get(genre_url)
             response.raise_for_status()
-            genre_map = {g['name'].lower(): g['id'] for g in response.json().get("genres", [])}
+            genre_map = {g["name"].lower(): g["id"] for g in response.json().get("genres", [])}
             genre_ids = [str(genre_map[g.lower()]) for g in genres if g.lower() in genre_map]
 
             if not genre_ids:
-                msg = "Sorry, I couldn't find a matching genre in TMDB 😢"
-                return self._finalize_response(msg_state, msg)
+                state.status = StatusEnum.INCOMPLETE
+                return state
 
             discover_url = (
                 f"https://api.themoviedb.org/3/discover/movie?api_key={api_key}"
@@ -81,27 +112,38 @@ class MovieFetchWorker(BaseWorker):
             )
             movie_res = requests.get(discover_url)
             movie_res.raise_for_status()
-            movies = movie_res.json().get("results", [])[:4]
+            movies = movie_res.json().get("results", [])[:5]
 
             if not movies:
-                msg = "No movies found matching your mood 😢"
-                return self._finalize_response(msg_state, msg)
+                state.status = StatusEnum.INCOMPLETE
+                return state
 
-            reply = "🎥 Here are some movie picks for your mood:\n\n"
+            reply = "🎬 Based on your preferences, here are some movie picks:\n\n"
             for m in movies:
                 title = m.get("title", "Unknown")
+                overview = m.get("overview", "")[:100]
                 rating = m.get("vote_average", "N/A")
                 release = m.get("release_date", "Unknown")
-                overview = m.get("overview", "")
-                reply += f"• {title} ({release}) – ⭐ {rating}/10\n  {overview[:100]}...\n\n"
+                reply += f"• **{title}** ({release}) - ⭐ {rating}/10\n  {overview}...\n\n"
 
-            return self._finalize_response(msg_state, reply)
+            state.status = StatusEnum.COMPLETE
+            state.response = reply
+            return state
 
         except Exception as e:
-            return self._finalize_response(msg_state, f"Something went wrong fetching movie data 😕: {e}")
+            state.status = StatusEnum.INCOMPLETE
+            return state
 
-    def _finalize_response(self, msg_state, message):
-        msg_state.metadata.taskgraph.node_status[
-            msg_state.metadata.taskgraph.curr_node
-        ] = StatusEnum.COMPLETE.value
-        return self.create_response(message=message)
+    def fallback_handler(self, state: MessageState):
+        message = (
+            "😕 I got a bit confused. Could you try telling me again how you're feeling "
+            "or what kind of movie you're in the mood for?"
+        )
+        state.response = message
+        return state
+
+    def check_parse_success(self, state: MessageState) -> str:
+        return "success" if str(state.status) == "StatusEnum.COMPLETE" else "fail"
+
+    def check_fetch_success(self, state: MessageState) -> str:
+        return "success" if str(state.status) == "StatusEnum.COMPLETE" else "fail"

@@ -4,7 +4,7 @@
     "builder_objective": "Build a pipeline that maps mood to genres and retrieves relevant movies via API.",
     "domain": "movies and entertainment",
     "intro": "Hi, I'm MovieBuddy! 🎬 Tell me your mood and I'll suggest a movie you'll love!",
-    "task_docs": ["./examples/moviebuddy/tasks.json"],
+    "task_docs": [],
     "rag_docs": [],
     "tasks": [],
     "workers": [

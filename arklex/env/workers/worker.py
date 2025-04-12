@@ -25,5 +25,6 @@ class BaseWorker(ABC):
     def execute(self, msg_state: MessageState):
         response_return = self._execute(msg_state)
         response_state = MessageState.model_validate(response_return)
-        response_state.trajectory[-1][-1].output = response_state.response if response_state.response else response_state.message_flow
+        if response_state.trajectory and response_state.trajectory[-1] and response_state.trajectory[-1][-1]:
+            response_state.trajectory[-1][-1].output = response_state.response if response_state.response else response_state.message_flow
         return response_state

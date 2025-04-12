@@ -8,7 +8,7 @@
                     "name": "MessageWorker"
                 },
                 "attribute": {
-                    "value": "Hello there! I'm MovieBuddy, your personal movie recommender. Whether you're in the mood for a thrilling action film or a heartwarming romance, I'm here to help. What kind of movie are you interested in today?",
+                    "value": "Hello! Welcome to MovieBuddy. What type of movie are you in the mood for today?",
                     "task": "start message",
                     "directed": false
                 },
@@ -24,8 +24,8 @@
                     "name": "MessageWorker"
                 },
                 "attribute": {
-                    "value": "Can you describe your current mood to help us find the perfect movie for you?",
-                    "task": "Ask the user to describe their current mood to understand the type of movie they are interested in.",
+                    "value": "How are you feeling today? Your mood can help me recommend a great movie for you.",
+                    "task": "Ask the user about their current mood.",
                     "directed": false
                 },
                 "limit": 1
@@ -36,11 +36,11 @@
             {
                 "resource": {
                     "id": "mood-to-genre-worker-id",
-                    "name": "MoodToGenreWorker"
+                    "name": "MovieGraphWorker"
                 },
                 "attribute": {
                     "value": "",
-                    "task": "Use the MoodToGenreWorker to map the user's mood to the corresponding TMDB genre names, even if there are typos in the user's input.",
+                    "task": "Use the user's response to provide a list of recommended movies that match the user's mood.",
                     "directed": false
                 },
                 "limit": 1
@@ -50,12 +50,12 @@
             "3",
             {
                 "resource": {
-                    "id": "movie-fetch-worker-id",
-                    "name": "MovieFetchWorker"
+                    "id": "message-worker-id",
+                    "name": "MessageWorker"
                 },
                 "attribute": {
-                    "value": "",
-                    "task": "Fetch a list of popular movies using the MovieFetchWorker for the genre(s) that match the user's mood.",
+                    "value": "Are you satisfied with these recommendations, or would you like to see more options?",
+                    "task": "Ask the user if they are satisfied with the recommendations or if they need more options.",
                     "directed": false
                 },
                 "limit": 1
@@ -65,12 +65,12 @@
             "4",
             {
                 "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
+                    "id": "mood-to-genre-worker-id",
+                    "name": "MovieGraphWorker"
                 },
                 "attribute": {
-                    "value": "Here are some movie recommendations based on your mood: [list of movies].",
-                    "task": "Provide the user with a list of recommended movies based on their mood using the MessageWorker.",
+                    "value": "",
+                    "task": "Provide additional information about the recommended movies if requested by the user.",
                     "directed": false
                 },
                 "limit": 1
@@ -80,12 +80,12 @@
             "5",
             {
                 "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
+                    "id": "mood-to-genre-worker-id",
+                    "name": "MovieGraphWorker"
                 },
                 "attribute": {
-                    "value": "Would you like more information about any of these movies or do you have any other preferences?",
-                    "task": "Ask the user if they would like more information about any of the recommended movies or if they have any other movie preferences.",
+                    "value": "Based on your preference for action movies, I would recommend 'Die Hard'.",
+                    "task": "Interpret genre and recommend a movie",
                     "directed": false
                 },
                 "limit": 1
@@ -95,12 +95,12 @@
             "6",
             {
                 "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
+                    "id": "mood-to-genre-worker-id",
+                    "name": "MovieGraphWorker"
                 },
                 "attribute": {
-                    "value": "What is your preferred movie genre or mood today?",
-                    "task": "Ask the user for their preferred movie genre or mood.",
+                    "value": "",
+                    "task": "Interpret both mood and genre and recommend a movie",
                     "directed": false
                 },
                 "limit": 1
@@ -111,146 +111,11 @@
             {
                 "resource": {
                     "id": "mood-to-genre-worker-id",
-                    "name": "MoodToGenreWorker"
+                    "name": "MovieGraphWorker"
                 },
                 "attribute": {
                     "value": "",
-                    "task": "Use MoodToGenreWorker to map the user's mood or preferred genre, even if there are typos, to the correct TMDB genre name.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "8",
-            {
-                "resource": {
-                    "id": "movie-fetch-worker-id",
-                    "name": "MovieFetchWorker"
-                },
-                "attribute": {
-                    "value": "",
-                    "task": "Fetch a list of popular movies in the identified genre using MovieFetchWorker.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "9",
-            {
-                "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
-                },
-                "attribute": {
-                    "value": "Here are some popular movies you might enjoy in that genre.",
-                    "task": "Deliver the list of recommended movies to the user using MessageWorker.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "10",
-            {
-                "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
-                },
-                "attribute": {
-                    "value": "Would you like more recommendations or is there another genre or mood you have in mind?",
-                    "task": "Ask the user if they would like more recommendations or have another genre or mood in mind.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "11",
-            {
-                "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
-                },
-                "attribute": {
-                    "value": "What is your current mood or preferred movie genre?",
-                    "task": "Ask the user for their current mood or preferred movie genre.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "12",
-            {
-                "resource": {
-                    "id": "mood-to-genre-worker-id",
-                    "name": "MoodToGenreWorker"
-                },
-                "attribute": {
-                    "value": "",
-                    "task": "Use MoodToGenreWorker to map the user's mood or genre input to TMDB genre names, ensuring that any typos are corrected.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "13",
-            {
-                "resource": {
-                    "id": "movie-fetch-worker-id",
-                    "name": "MovieFetchWorker"
-                },
-                "attribute": {
-                    "value": "",
-                    "task": "Utilize MovieFetchWorker to fetch popular movies by the identified genre from TMDB API.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "14",
-            {
-                "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
-                },
-                "attribute": {
-                    "value": "Here are some recommended movies for you. Would you like detailed information about any specific movie?",
-                    "task": "Provide the user with a list of recommended movies and ask if they would like detailed information about any specific movie.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "15",
-            {
-                "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
-                },
-                "attribute": {
-                    "value": "Here's the detailed information about the movie you selected.",
-                    "task": "Upon user selection, deliver detailed information about the chosen movie using MessageWorker.",
-                    "directed": false
-                },
-                "limit": 1
-            }
-        ],
-        [
-            "16",
-            {
-                "resource": {
-                    "id": "message-worker-id",
-                    "name": "MessageWorker"
-                },
-                "attribute": {
-                    "value": "Could you please provide your feedback or any specific preferences for future movie recommendations?",
-                    "task": "Capture user feedback or preferences for future recommendations",
+                    "task": "Fetch movie data and provide information",
                     "directed": false
                 },
                 "limit": 1
@@ -262,7 +127,7 @@
             "0",
             "1",
             {
-                "intent": "User wants movie recommendations based on mood",
+                "intent": "User want to get movie recommendation based on mood",
                 "attribute": {
                     "weight": 1,
                     "pred": true,
@@ -311,23 +176,10 @@
             }
         ],
         [
-            "4",
+            "0",
             "5",
             {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "0",
-            "6",
-            {
-                "intent": "User wants movie recommendations based on genre",
+                "intent": "User ask for movie recommendation based on genre",
                 "attribute": {
                     "weight": 1,
                     "pred": true,
@@ -337,62 +189,10 @@
             }
         ],
         [
-            "6",
-            "7",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "7",
-            "8",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "8",
-            "9",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "9",
-            "10",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
             "0",
-            "11",
+            "6",
             {
-                "intent": "User wants more information about a recommended movie",
+                "intent": "User want to get movie recommendation based on both mood and genre",
                 "attribute": {
                     "weight": 1,
                     "pred": true,
@@ -402,62 +202,10 @@
             }
         ],
         [
-            "11",
-            "12",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "12",
-            "13",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "13",
-            "14",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
-            "14",
-            "15",
-            {
-                "intent": "None",
-                "attribute": {
-                    "weight": 1,
-                    "pred": false,
-                    "definition": "",
-                    "sample_utterances": []
-                }
-            }
-        ],
-        [
             "0",
-            "16",
+            "7",
             {
-                "intent": "User wants to provide feedback or preferences",
+                "intent": "User want to know more about a specific movie",
                 "attribute": {
                     "weight": 1,
                     "pred": true,
@@ -468,7 +216,7 @@
         ]
     ],
     "role": "Movie recommender assistant",
-    "user_objective": "MovieBuddy recommends great movies based on the user\u2019s mood or genre preference using TMDB API.",
+    "user_objective": "MovieBuddy recommends great movies based on the user's mood or genre preference using TMDB API.",
     "builder_objective": "Build a pipeline that maps mood to genres and retrieves relevant movies via API.",
     "domain": "movies and entertainment",
     "intro": "Hi, I'm MovieBuddy! \ud83c\udfac Tell me your mood and I'll suggest a movie you'll love!",
@@ -478,12 +226,7 @@
     "workers": [
         {
             "id": "mood-to-genre-worker-id",
-            "name": "MoodToGenreWorker",
-            "path": "movie_worker.py"
-        },
-        {
-            "id": "movie-fetch-worker-id",
-            "name": "MovieFetchWorker",
+            "name": "MovieGraphWorker",
             "path": "movie_worker.py"
         },
         {

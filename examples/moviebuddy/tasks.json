@@ -1,0 +1,17 @@
+[
+    {
+        "task": "mood_to_genre_mapping",
+        "description": "Map user's mood to appropriate movie genres",
+        "num": 1
+    },
+    {
+        "task": "fetch_movies",
+        "description": "Fetch movies based on identified genres",
+        "num": 1
+    },
+    {
+        "task": "present_recommendations",
+        "description": "Present movie recommendations to user",
+        "num": 1
+    }
+] 

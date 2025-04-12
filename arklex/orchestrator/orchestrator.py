@@ -245,5 +245,8 @@ class AgentOrg:
                      inputs: dict, 
                      stream_type: StreamType = None, 
                      message_queue: janus.SyncQueue = None) -> Dict[str, Any]:
+        if message_queue is None:
+            import queue 
+            message_queue = queue.Queue()
         orchestrator_response = self._get_response(inputs, stream_type, message_queue)
         return orchestrator_response.model_dump()

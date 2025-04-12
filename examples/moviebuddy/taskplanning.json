@@ -1,38 +1,29 @@
 [
     {
-        "task_name": "Recommend movies based on the user's current mood",
+        "task_name": "Interpret mood and recommend a movie",
         "steps": [
-            "Ask the user to describe their current mood to understand the type of movie they are interested in.",
-            "Use the MoodToGenreWorker to map the user's mood to the corresponding TMDB genre names, even if there are typos in the user's input.",
-            "Fetch a list of popular movies using the MovieFetchWorker for the genre(s) that match the user's mood.",
-            "Provide the user with a list of recommended movies based on their mood using the MessageWorker.",
-            "Ask the user if they would like more information about any of the recommended movies or if they have any other movie preferences."
+            "Ask the user about their current mood.",
+            "Use the user's response to provide a list of recommended movies that match the user's mood.",
+            "Ask the user if they are satisfied with the recommendations or if they need more options.",
+            "Provide additional information about the recommended movies if requested by the user."
         ]
     },
     {
-        "task_name": "Recommend movies based on the user's preferred genre",
+        "task_name": "Interpret genre and recommend a movie",
         "steps": [
-            "Ask the user for their preferred movie genre or mood.",
-            "Use MoodToGenreWorker to map the user's mood or preferred genre, even if there are typos, to the correct TMDB genre name.",
-            "Fetch a list of popular movies in the identified genre using MovieFetchWorker.",
-            "Deliver the list of recommended movies to the user using MessageWorker.",
-            "Ask the user if they would like more recommendations or have another genre or mood in mind."
+            "Interpret genre and recommend a movie"
         ]
     },
     {
-        "task_name": "Provide detailed information about the recommended movie",
+        "task_name": "Interpret both mood and genre and recommend a movie",
         "steps": [
-            "Ask the user for their current mood or preferred movie genre.",
-            "Use MoodToGenreWorker to map the user's mood or genre input to TMDB genre names, ensuring that any typos are corrected.",
-            "Utilize MovieFetchWorker to fetch popular movies by the identified genre from TMDB API.",
-            "Provide the user with a list of recommended movies and ask if they would like detailed information about any specific movie.",
-            "Upon user selection, deliver detailed information about the chosen movie using MessageWorker."
+            "Interpret both mood and genre and recommend a movie"
         ]
     },
     {
-        "task_name": "Capture user feedback or preferences for future recommendations",
+        "task_name": "Fetch movie data and provide information",
         "steps": [
-            "Capture user feedback or preferences for future recommendations"
+            "Fetch movie data and provide information"
         ]
     }
 ]
