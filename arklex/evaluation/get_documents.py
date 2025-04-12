@@ -21,11 +21,25 @@ def load_docs(document_dir, doc_config, limit=10):
         if "task_docs" not in doc_config:
             raise ValueError("The config json file must have a key 'rag_docs' or 'task_docs' with a list of documents to load.")
         else:
-            rag_docs = doc_config['task_docs']
-            filename = "task_documents.pkl"
+            task_docs = doc_config['task_docs']
+            # Handle JSON files in task_docs
+            if isinstance(task_docs, list) and len(task_docs) > 0 and isinstance(task_docs[0], str) and task_docs[0].endswith('.json'):
+                documents = []
+                for doc_path in task_docs:
+                    try:
+                        with open(doc_path, 'r') as f:
+                            doc_content = json.load(f)
+                            documents.append({"url": doc_path, "content": json.dumps(doc_content), "metadata": {}})
+                    except Exception as e:
+                        print(f"Error loading JSON file {doc_path}: {e}")
+                return documents
+            else:
+                rag_docs = task_docs
+                filename = "task_documents.pkl"
     else:
         rag_docs = doc_config['rag_docs']
         filename = "documents.pkl"
+    
     if document_dir is not None:
         filepath = os.path.join(document_dir, filename)
         total_num_docs = sum([doc.get("num") if doc.get("num") else 1 for doc in rag_docs])
@@ -41,6 +55,10 @@ def load_docs(document_dir, doc_config, limit=10):
                 crawled_urls = loader.to_crawled_obj(urls)
                 docs.extend(crawled_urls)
             Loader.save(filepath, docs)
+        
+        if not docs:  # If docs is empty, return empty list
+            return []
+            
         if total_num_docs > 50:
             limit = total_num_docs // 5
         else:
@@ -52,7 +70,7 @@ def load_docs(document_dir, doc_config, limit=10):
             for doc in docs:
                 documents.append({"url": "", "content": doc.page_content, "metadata": doc.metadata})  
     else:
-        documents = ""
+        documents = []
     return documents
 
 if __name__ == "__main__":

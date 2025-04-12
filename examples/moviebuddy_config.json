@@ -1,0 +1,24 @@
+{
+    "role": "Movie recommender assistant",
+    "user_objective": "MovieBuddy recommends great movies based on the user's mood or genre preference using TMDB API.",
+    "builder_objective": "Build a pipeline that maps mood to genres and retrieves relevant movies via API.",
+    "domain": "movies and entertainment",
+    "intro": "Hi, I'm MovieBuddy! 🎬 Tell me your mood and I'll suggest a movie you'll love!",
+    "task_docs": ["./examples/moviebuddy/tasks.json"],
+    "rag_docs": [],
+    "tasks": [],
+    "workers": [
+      {
+        "id": "mood-to-genre-worker-id",
+        "name": "MovieGraphWorker",
+        "path": "movie_worker.py"
+      },
+      {
+        "id": "message-worker-id",
+        "name": "MessageWorker",
+        "path": "message_worker.py"
+      }
+    ],
+    "tools": []
+}
+  

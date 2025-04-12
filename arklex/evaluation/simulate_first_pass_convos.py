@@ -18,44 +18,33 @@ def conversation(model_api, goal, summary, model_params, synthetic_data_params, 
     history.append({'role': 'system','content': instructional_prompt})
     history.append({'role': 'user', 'content': start_text})
     chatbot_history = []
-
-    for i in range(synthetic_data_params['max_turns']):
-        output = chatgpt_chatbot(history) 
-        history.append({'role': 'assistant', 'content': output})
-        chatbot_history.append({'role': 'assistant', 'content': output})
-        response_data = query_chatbot(model_api, chatbot_history, model_params, env_config)
-        answer = response_data["answer"]
-        answer = answer.replace('\n', ' ')
-        model_params = response_data["parameters"]
-        pred_intent = response_data['parameters']['nlu_records'][-1]['pred_intent']
-        history[-1]['intent'] = pred_intent
-
-        history.append({'role': 'user', 'content': answer})
-        chatbot_history.append({'role': 'user', 'content': answer})
-        if i > 2 and check_goal_completion(goal, history.copy()):
-            history.append({'goal_completetion': True})
-            break
     
-    if not history[-1].get('goal_completetion', False):
-        history.append({'goal_completetion': False})
-    history.append({'trajectory': model_params["history"]})
-    return history
+    # First turn
+    response = chatgpt_chatbot(history)
+    history.append({'role': 'assistant', 'content': response})
+    chatbot_history.append({'role': 'user', 'content': response})
+    response = query_chatbot(model_api, chatbot_history, model_params, env_config)
+    history.append({'role': 'user', 'content': response['answer']})
+    chatbot_history.append({'role': 'assistant', 'content': response['answer']})
 
-def generate_conversations(model_api, goals, summary, model_params, synthetic_data_params, env_config):
-    convos = []
-    # for i in range(synthetic_data_params['num_convos']):
-    for goal in goals:
-        # goal = random.choice(goals)
-        convo = conversation(model_api, goal, summary, model_params, synthetic_data_params, env_config)
-        convos.append(flip_hist(filter_convo(convo, filter_turns=False)))
-    return convos
+    # Subsequent turns
+    for i in range(synthetic_data_params['max_turns']):
+        response = chatgpt_chatbot(history)
+        history.append({'role': 'assistant', 'content': response})
+        chatbot_history.append({'role': 'user', 'content': response})
+        response = query_chatbot(model_api, chatbot_history, model_params, env_config)
+        history.append({'role': 'user', 'content': response['answer']})
+        chatbot_history.append({'role': 'assistant', 'content': response['answer']})
+        if check_goal_completion(goal, history):
+            break
+    return history
 
 def simulate_conversations(model_api, model_params, synthetic_data_params, config):
     documents = load_docs(config['documents_dir'], config, synthetic_data_params['num_goals'] * 2)
     summary = config['intro']
     env_config = {
         "workers": config['workers'],
-        "tools": config["tools"]
+        "tools": config.get("tools", [])
     }
     
     final_goals = []
@@ -71,22 +60,36 @@ def simulate_conversations(model_api, model_params, synthetic_data_params, confi
         # goal adaptation
         final_goals = []
         for goal in raw_goals:
-            doc = random.choice(documents)
-            new_goal = adjust_goal(doc, goal)
+            doc = random.choice(documents) if documents else {"content": summary}
+            new_goal = adjust_goal(doc["content"], goal)
             final_goals.append(new_goal)
-
     else:
-        final_goals = generate_goals(documents, synthetic_data_params)
+        # If we have task_docs with test cases, use those instead of generating goals
+        if config.get('task_docs') and isinstance(config['task_docs'], list) and len(config['task_docs']) > 0:
+            try:
+                with open(config['task_docs'][0], 'r') as f:
+                    test_cases = json.load(f)
+                final_goals = []
+                for test_case in test_cases[:synthetic_data_params['num_goals']]:
+                    final_goals.append(test_case['description'])
+            except Exception as e:
+                print(f"Error loading test cases: {e}")
+                final_goals = generate_goals(documents if documents else [{"content": summary}], synthetic_data_params)
+        else:
+            final_goals = generate_goals(documents if documents else [{"content": summary}], synthetic_data_params)
     
     try:
-        conversations = generate_conversations(
-            model_api,
-            final_goals,
-            summary,
-            model_params,
-            synthetic_data_params,
-            env_config,
-        )
+        conversations = []
+        for goal in final_goals:
+            convo = conversation(
+                model_api,
+                goal,
+                summary,
+                model_params,
+                synthetic_data_params,
+                env_config,
+            )
+            conversations.append(convo)
     except Exception as e:
         print("Generate conversations failed")
         print("Error: ", e)
