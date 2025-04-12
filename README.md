@@ -6,7 +6,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/arklex.svg)](https://pypi.org/project/arklex)
 ![Python version](https://img.shields.io/pypi/pyversions/arklex)
 
-Arklex Agent First Organization provides a framework for developing **AI Agents** to complete complex tasks powered by LLMs. The framework is designed to be modular and extensible, allowing developers to customize workers/tools that can interact with each other in a variety of ways under the supervision of the orchestrator managed by *Taskgraph*. 
+Arklex Agent First Organization provides a framework for developing **AI Agents** to complete complex tasks powered by LLMs. The framework is designed to be modular and extensible, allowing developers to customize workers/tools that can interact with each other in various ways under the supervision of the orchestrator managed by *Taskgraph*. In this implementation Movie worker has been added.
 
 ## 📖 Documentation
 
@@ -55,7 +55,7 @@ Watch the tutorial on [YouTube](https://youtu.be/y1P2Ethvy0I) to learn how to bu
 > **:bulb:** The following `--output-dir`, `--input-dir` and `--documents_dir` can be the same directory to save the generated files and the chatbot will use the generated files to run. E.g `--output-dir ./example/customer_service`. The following commands take *customer_service* chatbot as an example.
 
 ```
-python create.py --config ./examples/customer_service_config.json --output-dir ./examples/customer_service
+python create.py --config ./examples/moviebuddy_config.json --output-dir ./examples/moviebuddy
 ```
 
 * Fields:
@@ -76,7 +76,7 @@ python create.py --config ./examples/customer_service_config.json --output-dir .
 
 **💬 2. Start Chatting**
 ```
-python run.py --input-dir ./examples/customer_service
+python run.py --input-dir ./examples/moviebuddy
 ```
 
 * Fields:
@@ -99,7 +99,10 @@ python run.py --input-dir ./examples/customer_service
 
   * First, create api for the previous chatbot you built. It will start an api on the default port 8000.
     ```
-    python model_api.py  --input-dir ./examples/customer_service
+    python model_api.py \
+    --input-dir ./examples/moviebuddy \
+    --model gpt-4o \
+    --port 8000
     ```
 
     * Fields:
@@ -110,10 +113,14 @@ python run.py --input-dir ./examples/customer_service
   * Then, start the evaluation process: 
     ```
     python eval.py \
-    --model_api http://127.0.0.1:8000/eval/chat \
-    --config ./examples/customer_service_config.json \
-    --documents_dir ./examples/customer_service \
-    --output-dir ./examples/customer_service
+      --model_api http://127.0.0.1:8000/eval/chat \
+      --config ./examples/moviebuddy_config.json \
+      --documents_dir ./examples/moviebuddy \
+      --output-dir ./examples/moviebuddy \
+      --num_convos 5 \
+      --num_goals 5 \
+      --max_turns 5 \
+      --model gpt-4o
     ```
     * Fields:
       * `--model_api`: The api url that you created in the previous step
