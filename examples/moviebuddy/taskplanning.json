@@ -1,0 +1,38 @@
+[
+    {
+        "task_name": "Recommend movies based on the user's current mood",
+        "steps": [
+            "Ask the user to describe their current mood to understand the type of movie they are interested in.",
+            "Use the MoodToGenreWorker to map the user's mood to the corresponding TMDB genre names, even if there are typos in the user's input.",
+            "Fetch a list of popular movies using the MovieFetchWorker for the genre(s) that match the user's mood.",
+            "Provide the user with a list of recommended movies based on their mood using the MessageWorker.",
+            "Ask the user if they would like more information about any of the recommended movies or if they have any other movie preferences."
+        ]
+    },
+    {
+        "task_name": "Recommend movies based on the user's preferred genre",
+        "steps": [
+            "Ask the user for their preferred movie genre or mood.",
+            "Use MoodToGenreWorker to map the user's mood or preferred genre, even if there are typos, to the correct TMDB genre name.",
+            "Fetch a list of popular movies in the identified genre using MovieFetchWorker.",
+            "Deliver the list of recommended movies to the user using MessageWorker.",
+            "Ask the user if they would like more recommendations or have another genre or mood in mind."
+        ]
+    },
+    {
+        "task_name": "Provide detailed information about the recommended movie",
+        "steps": [
+            "Ask the user for their current mood or preferred movie genre.",
+            "Use MoodToGenreWorker to map the user's mood or genre input to TMDB genre names, ensuring that any typos are corrected.",
+            "Utilize MovieFetchWorker to fetch popular movies by the identified genre from TMDB API.",
+            "Provide the user with a list of recommended movies and ask if they would like detailed information about any specific movie.",
+            "Upon user selection, deliver detailed information about the chosen movie using MessageWorker."
+        ]
+    },
+    {
+        "task_name": "Capture user feedback or preferences for future recommendations",
+        "steps": [
+            "Capture user feedback or preferences for future recommendations"
+        ]
+    }
+]

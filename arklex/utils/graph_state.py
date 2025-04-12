@@ -3,6 +3,7 @@ import janus
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 import uuid
+from queue import Queue
 
 
 ### Bot-related classes
@@ -94,7 +95,7 @@ class MessageState(BaseModel):
     metadata: Metadata
     # stream
     is_stream: bool
-    message_queue: Any = Field(exclude=True)
+    message_queue: Any = Field(default_factory=Queue, exclude=True)
 
 
 class PathNode(BaseModel):
