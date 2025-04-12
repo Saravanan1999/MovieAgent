@@ -21,9 +21,9 @@ from arklex.utils.model_provider_config import LLM_PROVIDERS, PROVIDER_MAP
 logger = init_logger(log_level=logging.INFO, filename=os.path.join(os.path.dirname(__file__), "logs", "arklex.log"))
 load_dotenv()
 
-# API_PORT = "55135"
-# NLUAPI_ADDR = f"http://localhost:{API_PORT}/nlu"
-# SLOTFILLAPI_ADDR = f"http://localhost:{API_PORT}/slotfill"
+API_PORT = "55135"
+NLUAPI_ADDR = f"http://localhost:{API_PORT}/nlu"
+SLOTFILLAPI_ADDR = f"http://localhost:{API_PORT}/slotfill"
 
 def generate_taskgraph(args):
     model = PROVIDER_MAP.get(MODEL['llm_provider'], ChatOpenAI)(model=MODEL["model_type_or_path"],timeout=30000)
